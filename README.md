@@ -4,6 +4,7 @@ This GitHub Actions job reads two read-only tabs from a Google Sheet and sends e
 
 - `生日表`: sends an email on the person's birthday.
 - `零食`: sends an email three days before the snack date.
+- Every reminder email uses the subject `团契提醒` and includes a compact list of birthdays in the current month.
 
 Dates are matched by month and day, so the same rows work every year. The program reads the latest sheet data each time it runs and never edits the Google Sheet or its formatting.
 
