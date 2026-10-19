@@ -1,0 +1,34 @@
+name: Daily date reminders
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+      timezone: "America/Chicago"
+  workflow_dispatch:
+    inputs:
+      reminder_date:
+        description: "Optional test date (YYYY-MM-DD)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Send reminders
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        run: >-
+          python reminder.py
+          ${{ github.event.inputs.reminder_date != '' && format('--date {0}', github.event.inputs.reminder_date) || '' }}
