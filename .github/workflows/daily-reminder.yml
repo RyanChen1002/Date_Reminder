@@ -2,8 +2,11 @@ name: Daily date reminders
 
 on:
   schedule:
-    - cron: "0 8 * * *"
-      timezone: "America/Chicago"
+    # GitHub Actions cron uses UTC and cannot apply an IANA timezone.  These
+    # two times cover 8:00 AM in Chicago during standard and daylight time;
+    # the time-check job below lets through only the one that is actually 8 AM.
+    - cron: "0 13 * * *" # 8:00 AM CST
+    - cron: "0 14 * * *" # 8:00 AM CDT
   workflow_dispatch:
     inputs:
       reminder_date:
@@ -15,7 +18,25 @@ permissions:
   contents: read
 
 jobs:
+  time-check:
+    runs-on: ubuntu-latest
+    outputs:
+      should-send: ${{ steps.check.outputs.should-send }}
+    steps:
+      - id: check
+        name: Confirm it is 8 AM in Chicago
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
+             [ "$(TZ=America/Chicago date +%H)" = "08" ]; then
+            echo "should-send=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should-send=false" >> "$GITHUB_OUTPUT"
+          fi
+
   send-reminders:
+    needs: time-check
+    if: needs.time-check.outputs.should-send == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
